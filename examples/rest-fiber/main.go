@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/diazharizky/go-app-core/config"
@@ -42,9 +43,7 @@ func initAppCore() {
 	appCore.Info.Env = config.Global.GetString("app.env")
 
 	appCore.TracerProvider, err = tracerProvider()
-	if err != nil {
-		log.Fatalf("Error unable to init TracerProvider: %v\n", err)
-	}
+	handleErr(err)
 
 	otel.SetTracerProvider(appCore.TracerProvider)
 
@@ -71,7 +70,7 @@ func tracerProvider() (*tracesdk.TracerProvider, error) {
 	url := config.Global.GetString("jaeger.url")
 	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error unable to init TracerProvider: %v", err)
 	}
 
 	tp := tracesdk.NewTracerProvider(
