@@ -27,7 +27,7 @@ func (repo userRepository) List(ctx context.Context) (users []models.User, err e
 
 	defer span.End()
 
-	if err := repo.db.Find(&users).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Find(&users).Error; err != nil {
 		return nil, err
 	}
 
@@ -41,5 +41,5 @@ func (repo userRepository) Create(ctx context.Context, newUser *models.User) err
 
 	defer span.End()
 
-	return repo.db.Create(newUser).Error
+	return repo.db.WithContext(ctx).Create(newUser).Error
 }

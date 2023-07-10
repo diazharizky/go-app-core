@@ -6,6 +6,7 @@ import (
 	"github.com/diazharizky/go-app-core/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 type postgresClient struct {
@@ -40,6 +41,10 @@ func NewPostgresClient() postgresClient {
 func (client postgresClient) GetDB() (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(client.dsn()), &gorm.Config{})
 	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Use(tracing.NewPlugin()); err != nil {
 		return nil, err
 	}
 
