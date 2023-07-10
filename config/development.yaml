@@ -1,0 +1,6 @@
+app:
+  name: go-core-app
+  env: development
+
+jaeger:
+  url: http://localhost:14268/api/traces

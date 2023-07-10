@@ -3,13 +3,20 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/diazharizky/go-app-core/pkg/redix"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
+
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 type Core struct {
+	Info Info
+
+	TracerProvider *tracesdk.TracerProvider
+
 	MongoClient *mongo.Client
 	RDB         *gorm.DB
 	Redix       *redix.Redix
@@ -42,6 +49,15 @@ func (c Core) Close() error {
 
 		if err := c.Redix.Close(); err != nil {
 			return fmt.Errorf("error unable to close Redis connection: %v", err)
+		}
+	}
+
+	if c.TracerProvider != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+
+		if err := c.TracerProvider.Shutdown(ctx); err != nil {
+			return fmt.Errorf("error unable to shutdown TracerProvider: %v", err)
 		}
 	}
 
