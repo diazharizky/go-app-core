@@ -3,14 +3,19 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/diazharizky/go-app-core/config"
 	"github.com/diazharizky/go-app-core/pkg/redix"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/jaeger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"gorm.io/gorm"
 
+	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -83,4 +88,32 @@ func (c Core) Attributes() []attribute.KeyValue {
 
 func (c *Core) AddAttribute(newAttr attribute.KeyValue) {
 	c.attributes = append(c.attributes, newAttr)
+}
+
+func (c *Core) SetTracerProvider(exporter TraceExporter) {
+	switch exporter {
+	case TraceExporterJaeger:
+		c.jaegerTraceExporter()
+	}
+}
+
+func (c *Core) jaegerTraceExporter() {
+	url := config.Global.GetString("jaeger.url")
+	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+	if err != nil {
+		log.Printf("Error unable to assign Jaeger as trace exporter: %v\n", err)
+		return
+	}
+
+	c.TracerProvider = tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exporter),
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			c.Attributes()...,
+		)),
+	)
+
+	// Set the TracerProvider to the native library,
+	// still figuring out why it does not work if we don't do this
+	otel.SetTracerProvider(c.TracerProvider)
 }

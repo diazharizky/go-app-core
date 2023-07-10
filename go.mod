@@ -12,6 +12,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.16.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.2
+	gorm.io/plugin/opentelemetry v0.1.3
 )
 
 require (
@@ -62,5 +63,4 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/plugin/opentelemetry v0.1.3 // indirect
 )

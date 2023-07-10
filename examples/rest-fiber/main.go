@@ -1,21 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/diazharizky/go-app-core/config"
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/app"
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/repositories"
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/routing"
+	pkgapp "github.com/diazharizky/go-app-core/pkg/app"
 	"github.com/diazharizky/go-app-core/pkg/rdb"
 	"github.com/diazharizky/go-app-core/pkg/redix"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 var appCore *app.Core
@@ -45,10 +39,7 @@ func initAppCore() {
 	// To set custom attributes
 	// appCore.AddAttribute(attribute.String("customAttributeKey", "customAttributeValue"))
 
-	appCore.TracerProvider, err = tracerProvider()
-	handleErr(err)
-
-	otel.SetTracerProvider(appCore.TracerProvider)
+	appCore.SetTracerProvider(pkgapp.TraceExporterJaeger)
 
 	db, err := rdb.GetDB(rdb.DBTypePostgres)
 	handleErr(err)
@@ -67,22 +58,4 @@ func handleErr(err error) {
 	if err != nil {
 		log.Fatalf("Error has happened: %v\n", err)
 	}
-}
-
-func tracerProvider() (*tracesdk.TracerProvider, error) {
-	url := config.Global.GetString("jaeger.url")
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
-	if err != nil {
-		return nil, fmt.Errorf("error unable to init TracerProvider: %v", err)
-	}
-
-	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithBatcher(exporter),
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			appCore.Attributes()...,
-		)),
-	)
-
-	return tp, nil
 }
