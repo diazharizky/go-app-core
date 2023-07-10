@@ -1,6 +1,7 @@
 package app
 
 type Info struct {
-	Name string
-	Env  string
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Env     string `json:"environment"`
 }

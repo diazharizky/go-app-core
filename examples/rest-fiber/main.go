@@ -11,7 +11,6 @@ import (
 	"github.com/diazharizky/go-app-core/pkg/rdb"
 	"github.com/diazharizky/go-app-core/pkg/redix"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -40,7 +39,11 @@ func initAppCore() {
 
 	appCore = &app.Core{}
 	appCore.Info.Name = config.Global.GetString("app.name")
+	appCore.Info.Version = config.Global.GetString("app.version")
 	appCore.Info.Env = config.Global.GetString("app.env")
+
+	// To set custom attributes
+	// appCore.AddAttribute(attribute.String("customAttributeKey", "customAttributeValue"))
 
 	appCore.TracerProvider, err = tracerProvider()
 	handleErr(err)
@@ -77,8 +80,7 @@ func tracerProvider() (*tracesdk.TracerProvider, error) {
 		tracesdk.WithBatcher(exporter),
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceName(appCore.Info.Name),
-			attribute.String("environment", appCore.Info.Env),
+			appCore.Attributes()...,
 		)),
 	)
 

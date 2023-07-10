@@ -7,12 +7,16 @@ import (
 
 	"github.com/diazharizky/go-app-core/pkg/redix"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"gorm.io/gorm"
 
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 type Core struct {
+	attributes []attribute.KeyValue
+
 	Info Info
 
 	TracerProvider *tracesdk.TracerProvider
@@ -62,4 +66,19 @@ func (c Core) Close() error {
 	}
 
 	return nil
+}
+
+func (c Core) Attributes() []attribute.KeyValue {
+	return append(
+		[]attribute.KeyValue{
+			semconv.ServiceName(c.Info.Name),
+			attribute.String("version", c.Info.Version),
+			attribute.String("environment", c.Info.Env),
+		},
+		c.attributes...,
+	)
+}
+
+func (c *Core) AddAttribute(newAttr attribute.KeyValue) {
+	c.attributes = append(c.attributes, newAttr)
 }

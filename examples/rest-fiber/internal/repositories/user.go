@@ -21,7 +21,7 @@ func NewUserRepository(db *gorm.DB) userRepository {
 }
 
 func (repo userRepository) List(ctx context.Context) (users []models.User, err error) {
-	_, span := otel.Tracer(repo.traceName).Start(ctx, "list")
+	ctx, span := otel.Tracer(repo.traceName).Start(ctx, "list")
 
 	// Set span's attributes here
 
@@ -35,7 +35,7 @@ func (repo userRepository) List(ctx context.Context) (users []models.User, err e
 }
 
 func (repo userRepository) Create(ctx context.Context, newUser *models.User) error {
-	_, span := otel.Tracer(repo.traceName).Start(ctx, "create")
+	ctx, span := otel.Tracer(repo.traceName).Start(ctx, "create")
 
 	// Set span's attributes here
 
