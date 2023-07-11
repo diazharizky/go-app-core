@@ -1,0 +1,31 @@
+[
+  {
+    "httpRequest": {
+      "path": "/users",
+      "method": "GET"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "ok": true,
+        "data": [
+          {
+            "id": 1,
+            "email": "isagi@bluelock.co.jp",
+            "fullName": "Isagi"
+          },
+          {
+            "id": 2,
+            "email": "rin@bluelock.co.jp",
+            "fullName": "Rin Itoshi"
+          },
+          {
+            "id": 3,
+            "email": "sae@bluelock.co.jp",
+            "fullName": "Sae Itoshi"
+          }
+        ]
+      }
+    }
+  }
+]

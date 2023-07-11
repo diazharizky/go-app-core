@@ -9,6 +9,7 @@ import (
 
 	"github.com/diazharizky/go-app-core/config"
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/app"
+	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/routing/controllers/apis"
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/routing/controllers/users"
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,6 +31,7 @@ func NewRouter(appCore *app.Core) (r router) {
 	v1 := api.Group("v1")
 
 	users.RegisterController(v1, appCore)
+	apis.RegisterController(v1, appCore)
 
 	r.server = svr
 

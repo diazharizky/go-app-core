@@ -36,3 +36,15 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
       - LOG_LEVEL=debug
+
+  mock_users_api:
+    image: mockserver/mockserver:mockserver-snapshot
+    ports:
+      - 1180:1080
+    environment:
+      MOCKSERVER_PROPERTY_FILE: /config/mockserver.properties
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mock-users-api-config.json
+    volumes:
+      - type: bind
+        source: ./config
+        target: /config
