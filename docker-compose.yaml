@@ -39,6 +39,7 @@ services:
 
   mock_users_api:
     image: mockserver/mockserver:mockserver-snapshot
+    restart: unless-stopped
     ports:
       - 1180:1080
     environment:

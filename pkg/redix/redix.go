@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/diazharizky/go-app-core/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -13,18 +12,7 @@ type Redix struct {
 	client *redis.Client
 }
 
-func init() {
-	config.Global.SetDefault("redis.host", "localhost")
-	config.Global.SetDefault("redis.port", 6379)
-}
-
-func New() (*Redix, error) {
-	addr := fmt.Sprintf(
-		"%s:%d",
-		config.Global.GetString("redis.host"),
-		config.Global.GetInt("redis.port"),
-	)
-
+func New(addr string) (*Redix, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr: addr,
 		DB:   0,

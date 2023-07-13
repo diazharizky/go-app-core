@@ -9,7 +9,6 @@ import (
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/routing"
 	pkgapp "github.com/diazharizky/go-app-core/pkg/app"
 	"github.com/diazharizky/go-app-core/pkg/rdb"
-	"github.com/diazharizky/go-app-core/pkg/redix"
 )
 
 var appCore *app.Core
@@ -45,11 +44,6 @@ func initAppCore() {
 	handleErr(err)
 
 	appCore.RDB = db
-
-	redix, err := redix.New()
-	handleErr(err)
-
-	appCore.Redix = redix
 
 	appCore.UserRepository = repositories.NewUserRepository(appCore.RDB)
 }
