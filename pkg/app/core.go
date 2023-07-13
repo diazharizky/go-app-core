@@ -64,7 +64,7 @@ func (c Core) Close() error {
 	if c.TracerProvider != nil {
 		fmt.Println("Shutting down TracerProvider...")
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		if err := c.TracerProvider.Shutdown(ctx); err != nil {

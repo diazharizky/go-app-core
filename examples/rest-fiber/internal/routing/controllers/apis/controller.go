@@ -5,24 +5,24 @@ import (
 	"time"
 
 	"github.com/diazharizky/go-app-core/examples/rest-fiber/internal/app"
-	"github.com/diazharizky/go-app-core/pkg/httpreq"
+	"github.com/diazharizky/go-app-core/pkg/httpclient"
 	"github.com/gofiber/fiber/v2"
 )
 
 type controller struct {
-	httpReq *httpreq.HTTPReq
+	httpReq *httpclient.Client
 }
 
 const traceName string = "controllers.apis"
 
 func RegisterController(router fiber.Router, appCore *app.Core) {
-	httpr, err := httpreq.New(httpreq.HTTPReqConfig{
-		BaseURL:     "http://localhost:1180",
-		ServiceName: "mockserver",
-		RateLimitConfig: httpreq.RateLimitConfig{
-			RateLimit:         10,
-			RateLimitCooldown: 60 * time.Second,
-			CacheURL:          "localhost:6379",
+	httpr, err := httpclient.New(httpclient.ClientConfig{
+		BaseURL: "http://localhost:1180",
+		APIName: "mockserver",
+		ClientRateConfig: httpclient.ClientRateConfig{
+			Limit:    10,
+			Cooldown: 60 * time.Second,
+			CacheURL: "localhost:6379",
 		},
 	})
 
