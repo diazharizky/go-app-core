@@ -9,39 +9,52 @@ import (
 	"time"
 
 	urlutils "net/url"
+
+	"github.com/diazharizky/go-app-core/pkg/redix"
 )
 
-type httpReq struct {
-	baseURL string
-	client  *http.Client
-	headers map[string]string
+type HTTPReq struct {
+	serviceName string
+	baseURL     string
+	headers     map[string]string
+	client      *http.Client
+	cache       *redix.Redix
+	rateLimit   int16
 }
 
 type HTTPReqConfig struct {
-	BaseURL           string
-	BaseHeaders       map[string]string
-	Timeout           *time.Duration
-	Name              string
-	RateLimit         int
-	RateLimitCooldown time.Duration
+	RateLimitConfig
+
+	BaseURL     string
+	BaseHeaders map[string]string
+	Timeout     *time.Duration
+	ServiceName string
 }
 
-func New(cfg HTTPReqConfig) *httpReq {
+func New(cfg HTTPReqConfig) (*HTTPReq, error) {
 	if cfg.Timeout == nil {
 		defaultTimeout := time.Second * 5
 		cfg.Timeout = &defaultTimeout
 	}
 
-	return &httpReq{
+	httpr := &HTTPReq{
 		baseURL: cfg.BaseURL,
 		headers: cfg.BaseHeaders,
 		client: &http.Client{
 			Timeout: *cfg.Timeout,
 		},
 	}
+
+	if cfg.RateLimit > 0 {
+		if err := httpr.initRateLimit(cfg); err != nil {
+			return nil, err
+		}
+	}
+
+	return httpr, nil
 }
 
-func (h httpReq) Get(
+func (h HTTPReq) Get(
 	path string,
 	params map[string]string,
 	dest interface{},
@@ -49,7 +62,7 @@ func (h httpReq) Get(
 	return h.sendRequest(http.MethodGet, path, params, nil, dest)
 }
 
-func (h httpReq) Post(
+func (h HTTPReq) Post(
 	path string,
 	params map[string]string,
 	body io.Reader,
@@ -58,12 +71,16 @@ func (h httpReq) Post(
 	return h.sendRequest(http.MethodPost, path, params, body, dest)
 }
 
-func (h httpReq) sendRequest(
+func (h HTTPReq) sendRequest(
 	method, path string,
 	params map[string]string,
 	body io.Reader,
 	dest interface{},
 ) error {
+	if err := h.checkRateLimit(); err != nil {
+		return err
+	}
+
 	url := fmt.Sprintf("%s/%s", h.baseURL, path)
 
 	if len(params) > 0 {
@@ -96,6 +113,10 @@ func (h httpReq) sendRequest(
 
 	if err = json.NewDecoder(resp.Body).Decode(dest); err != nil {
 		return err
+	}
+
+	if err = h.countRateLimit(); err != nil {
+		log.Printf("Error unable record rate limit count: %v\n", err)
 	}
 
 	return nil
