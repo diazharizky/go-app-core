@@ -116,7 +116,7 @@ func (c Client) sendRequest(
 	}
 
 	if currentRate != nil {
-		if err = c.rate.incrementRate(c.rateKey(), *currentRate); err != nil {
+		if err = c.rate.incrementRate(*currentRate); err != nil {
 			log.Printf("Error happened on increment rate count: %v\n", err)
 		}
 	}

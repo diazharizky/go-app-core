@@ -9,9 +9,9 @@ import (
 )
 
 type clientRate struct {
-	cache    *redix.Redix
 	limit    int16
 	cooldown time.Duration
+	cache    *redix.Redix
 }
 
 type ClientRateConfig struct {
@@ -21,6 +21,7 @@ type ClientRateConfig struct {
 }
 
 type rateRecord struct {
+	Key       string
 	Counter   int16     `redis:"counter"`
 	UpdatedAt time.Time `redis:"updated_at"`
 }
@@ -47,17 +48,19 @@ func (c clientRate) checkRateLimit(key string) (*rateRecord, error) {
 		return nil, fmt.Errorf("rate limit exceeded: %s", key)
 	}
 
+	currentRate.Key = key
+
 	return &currentRate, nil
 }
 
-func (c clientRate) incrementRate(key string, rate rateRecord) error {
+func (c clientRate) incrementRate(rate rateRecord) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	rate.Counter++
 	rate.UpdatedAt = time.Now()
 
-	if err := c.cache.Set(ctx, key, rate); err != nil {
+	if err := c.cache.Set(ctx, rate.Key, rate); err != nil {
 		return err
 	}
 
