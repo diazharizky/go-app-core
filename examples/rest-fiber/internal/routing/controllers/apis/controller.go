@@ -20,7 +20,7 @@ func RegisterController(router fiber.Router, appCore *app.Core) {
 		BaseURL: "http://localhost:1180",
 		APIName: "mockserver",
 		RateConfig: httpclient.ClientRateConfig{
-			Limit:    5,
+			Limit:    500,
 			Cooldown: 60 * time.Second,
 			CacheURL: "localhost:6379",
 		},
