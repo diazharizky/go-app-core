@@ -18,17 +18,16 @@ type Client struct {
 	baseURL string
 	headers map[string]string
 	agent   *http.Client
-	rate    clientRate
 	apiName string
+	rate    clientRate
 }
 
 type ClientConfig struct {
-	ClientRateConfig
-
-	BaseURL string
-	Headers map[string]string
-	Timeout time.Duration
-	APIName string
+	BaseURL    string
+	Headers    map[string]string
+	Timeout    time.Duration
+	APIName    string
+	RateConfig ClientRateConfig
 }
 
 func New(cfg ClientConfig) (*Client, error) {
@@ -39,13 +38,13 @@ func New(cfg ClientConfig) (*Client, error) {
 	client := &Client{
 		baseURL: cfg.BaseURL,
 		headers: cfg.Headers,
-		apiName: cfg.APIName,
 		agent: &http.Client{
 			Timeout: cfg.Timeout,
 		},
+		apiName: cfg.APIName,
 	}
 
-	if cfg.Limit > 0 {
+	if cfg.RateConfig.Limit > 0 {
 		if err := client.initClientRate(cfg); err != nil {
 			return nil, fmt.Errorf("unable to initialize client rate config: %v", err)
 		}
@@ -126,21 +125,21 @@ func (c Client) sendRequest(
 }
 
 func (c *Client) initClientRate(cfg ClientConfig) error {
-	if cfg.Cooldown == 0 {
+	if cfg.RateConfig.Cooldown == 0 {
 		return errors.New("`Cooldown` must be configured when using rate limiting")
 	}
 
-	if cfg.CacheURL == "" {
+	if cfg.RateConfig.CacheURL == "" {
 		return errors.New("`CacheURL` must be configured when using rate limiting")
 	}
 
 	c.rate = clientRate{
-		limit:    cfg.Limit,
-		cooldown: cfg.Cooldown,
+		limit:    cfg.RateConfig.Limit,
+		cooldown: cfg.RateConfig.Cooldown,
 	}
 
 	var err error
-	c.rate.cache, err = redix.New(cfg.CacheURL)
+	c.rate.cache, err = redix.New(cfg.RateConfig.CacheURL)
 	if err != nil {
 		return err
 	}
