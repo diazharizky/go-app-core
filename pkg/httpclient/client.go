@@ -44,9 +44,13 @@ func New(cfg ClientConfig) (*Client, error) {
 		},
 	}
 
+	if cfg.APIName != "" {
+		client.apiName = cfg.APIName
+	}
+
 	if cfg.Limit > 0 {
 		if err := client.initClientRate(cfg); err != nil {
-			return nil, fmt.Errorf("unable to initialize rate config: %v", err)
+			return nil, fmt.Errorf("unable to initialize client rate config: %v", err)
 		}
 	}
 
@@ -76,7 +80,8 @@ func (c Client) sendRequest(
 	body io.Reader,
 	dest interface{},
 ) error {
-	if err := c.rate.checkRateThreshold(c.rateKey()); err != nil {
+	currentRate, err := c.rate.checkRateLimit(c.rateKey())
+	if err != nil {
 		return err
 	}
 
@@ -114,8 +119,10 @@ func (c Client) sendRequest(
 		return err
 	}
 
-	if err = c.rate.increaseRate(c.rateKey()); err != nil {
-		log.Printf("Error unable record rate limit count: %v\n", err)
+	if currentRate != nil {
+		if err = c.rate.incrementRate(c.rateKey(), *currentRate); err != nil {
+			log.Printf("Error happened on increment rate count: %v\n", err)
+		}
 	}
 
 	return nil
@@ -123,23 +130,27 @@ func (c Client) sendRequest(
 
 func (c *Client) initClientRate(cfg ClientConfig) error {
 	if cfg.Cooldown == 0 {
-		return errors.New("`Cooldown` must be configured when `Limit` is configured")
+		return errors.New("`Cooldown` must be configured when using rate limiting")
 	}
 
 	if cfg.CacheURL == "" {
-		return errors.New("`CacheURL` must be configured when `Limit` is configured")
+		return errors.New("`CacheURL` must be configured when using rate limiting")
 	}
 
-	cache, err := redix.New(cfg.CacheURL)
+	c.rate = clientRate{
+		limit:    cfg.Limit,
+		cooldown: cfg.Cooldown,
+	}
+
+	var err error
+	c.rate.cache, err = redix.New(cfg.CacheURL)
 	if err != nil {
 		return err
 	}
-
-	c.rate.cache = cache
 
 	return nil
 }
 
 func (c Client) rateKey() string {
-	return "rate_" + c.apiName
+	return "api_rate_" + c.apiName
 }
