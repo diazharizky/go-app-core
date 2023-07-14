@@ -39,13 +39,10 @@ func New(cfg ClientConfig) (*Client, error) {
 	client := &Client{
 		baseURL: cfg.BaseURL,
 		headers: cfg.Headers,
+		apiName: cfg.APIName,
 		agent: &http.Client{
 			Timeout: cfg.Timeout,
 		},
-	}
-
-	if cfg.APIName != "" {
-		client.apiName = cfg.APIName
 	}
 
 	if cfg.Limit > 0 {
