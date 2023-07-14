@@ -45,7 +45,7 @@ func New(cfg ClientConfig) (*Client, error) {
 	}
 
 	if cfg.RateConfig.Limit > 0 {
-		if err := client.initClientRate(cfg); err != nil {
+		if err := client.initRate(cfg); err != nil {
 			return nil, fmt.Errorf("unable to initialize client rate config: %v", err)
 		}
 	}
@@ -124,13 +124,13 @@ func (c Client) sendRequest(
 	return nil
 }
 
-func (c *Client) initClientRate(cfg ClientConfig) error {
+func (c *Client) initRate(cfg ClientConfig) error {
 	if cfg.RateConfig.Cooldown == 0 {
-		return errors.New("`Cooldown` must be configured when using rate limiting")
+		return errors.New("`Cooldown` must be configured when using rate limiter")
 	}
 
 	if cfg.RateConfig.CacheURL == "" {
-		return errors.New("`CacheURL` must be configured when using rate limiting")
+		return errors.New("`CacheURL` must be configured when using rate limiter")
 	}
 
 	c.rate = clientRate{
