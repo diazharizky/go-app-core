@@ -12,6 +12,7 @@ import (
 	urlutils "net/url"
 
 	"github.com/diazharizky/go-app-core/pkg/redix"
+	"go.uber.org/ratelimit"
 )
 
 type Client struct {
@@ -28,6 +29,12 @@ type ClientConfig struct {
 	Timeout    time.Duration
 	APIName    string
 	RateConfig ClientRateConfig
+}
+
+var rateLimiter ratelimit.Limiter
+
+func init() {
+	rateLimiter = ratelimit.New(10, ratelimit.Per(60*time.Second))
 }
 
 func New(cfg ClientConfig) (*Client, error) {
@@ -76,6 +83,8 @@ func (c Client) sendRequest(
 	body io.Reader,
 	dest interface{},
 ) error {
+	rateLimiter.Take()
+
 	currentRate, err := c.rate.checkRateLimit(c.rateKey())
 	if err != nil {
 		return err
