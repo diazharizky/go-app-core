@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 services:
   postgres:
     image: postgres:11.10-alpine
@@ -8,7 +8,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-goappcore}
       - POSTGRES_DB=${POSTGRES_DB:-goappcore}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
+      test: ['CMD-SHELL', 'pg_isready']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
     command: redis-server --save 60 1 --loglevel warning
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 5s
       retries: 3
@@ -31,8 +31,8 @@ services:
     image: jaegertracing/all-in-one:latest
     restart: unless-stopped
     ports:
-      - "16686:16686"
-      - "14268:14268"
+      - '16686:16686'
+      - '14268:14268'
     environment:
       - COLLECTOR_OTLP_ENABLED=true
       - LOG_LEVEL=debug
@@ -49,3 +49,45 @@ services:
       - type: bind
         source: ./config
         target: /config
+
+  es1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      - node.name=es1
+      - discovery.seed_hosts=es2
+      - cluster.initial_master_nodes=es1,es2
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    healthcheck:
+      test: curl -s http://es1:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - 9200:9200
+
+  es2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      - node.name=es2
+      - discovery.seed_hosts=es1
+      - cluster.initial_master_nodes=es1,es2
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    healthcheck:
+      test: curl -s http://es2:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 30s
+      retries: 3
